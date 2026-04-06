@@ -3,12 +3,12 @@
 #include <time.h>
 
 typedef struct Tree {
-    int dim; // Размерность точек
-    // int *point; // Координаты точки
-    double *point; // Координаты точки
-    int splitByDim; // Ось разделения
+    int dim;
+    double *point;
+    int splitByDim;
     struct Tree *right;
     struct Tree *left;
+    struct Tree *parent;
 } Tree;
 
 // ============== INIT/ADD POINT ======================
@@ -19,20 +19,19 @@ Tree *initKDTree(int dim) {
     tree->point = malloc(sizeof(double) * dim);
     tree->right = NULL;
     tree->left = NULL;
+    tree->parent = NULL;
     return tree;
 }
 
-static int sortDim; // with witch dim. need to sort
+static int sortDim;
 
 int compare(const void *a, const void *b) {
-    // func for Qsort
-    const int *pa = *(const int **) a;
-    const int *pb = *(const int **) b;
+    const double *pa = *(const double **) a;
+    const double *pb = *(const double **) b;
     return pa[sortDim] - pb[sortDim];
 }
 
 void buildKDTree(Tree **tree, double **points, int right, int left, int dim, int depth) {
-
     if (right <= left) {
         *tree = NULL;
         return;
@@ -47,7 +46,14 @@ void buildKDTree(Tree **tree, double **points, int right, int left, int dim, int
     node->splitByDim = sortDim;
 
     buildKDTree(&node->left, points, med, left, dim, depth + 1);
+    if (node->left != NULL) {
+        node->left->parent = node;
+    }
+
     buildKDTree(&node->right, points, right, med + 1, dim, depth + 1);
+    if (node->right != NULL) {
+        node->right->parent = node;
+    }
 
     *tree = node;
 }
@@ -55,7 +61,6 @@ void buildKDTree(Tree **tree, double **points, int right, int left, int dim, int
 // ============== GET POINT ======================
 
 Tree *getPointInTree(Tree *tree, double *point, int dim) {
-    // find point in tree
     if (tree == NULL) {
         return NULL;
     }
@@ -83,7 +88,6 @@ Tree *getPointInTree(Tree *tree, double *point, int dim) {
 }
 
 Tree *findMin(Tree *tree, int dimToCompare, int dim) {
-    // get min Point in this "line"
     if (tree == NULL) {
         return NULL;
     }
@@ -130,63 +134,46 @@ Tree *findMax(Tree *tree, int dimToCompare, int dim) {
     return maxNode;
 }
 
-//      ============== get nearest ======================
-
-
-
 // ============== REMOVE POINT ======================
+Tree *deleteNode(Tree *root, double *point, int dim) {
+    Tree *tree = getPointInTree(root, point, dim);
 
-Tree *deleteNode(Tree *tree, double *point, int dim) {
     if (tree == NULL) {
         return NULL;
     }
-    int isEqual = 1;
-    for (int i = 0; i < dim; i++) {
-        if (tree->point[i] != point[i]) {
-            isEqual = 0;
-            break;
+
+    if (tree->right != NULL) {
+        Tree *minNode = findMin(tree->right, tree->splitByDim, dim);
+
+        for (int i = 0; i < dim; i++) {
+            tree->point[i] = minNode->point[i];
         }
-    }
-    if (isEqual) {
-        if (tree->right != NULL) {
-            Tree *minNode = findMin(tree->right, tree->splitByDim, dim);
-            for (int i = 0; i < dim; i++) {
-                tree->point[i] = minNode->point[i];
-            }
-            tree->right = deleteNode(tree->right, minNode->point, dim);
-        } else if (tree->left != NULL) {
-            Tree *maxNode = findMax(tree->left, tree->splitByDim, dim);
-            for (int i = 0; i < dim; i++) {
-                tree->point[i] = maxNode->point[i];
-            }
-            tree->left = deleteNode(tree->left, maxNode->point, dim);
-        } else {
-            free(tree);
-            return NULL;
+        tree->right = deleteNode(tree->right, minNode->point, dim);
+    } else if (tree->left != NULL) {
+        Tree *maxNode = findMax(tree->left, tree->splitByDim, dim);
+
+        for (int i = 0; i < dim; i++) {
+            tree->point[i] = maxNode->point[i];
         }
+
+        tree->left = deleteNode(tree->left, maxNode->point, dim);
     } else {
-        if (point[tree->splitByDim] < tree->point[tree->splitByDim]) {
-            tree->left = deleteNode(tree->left, point, dim);
-        } else {
-            tree->right = deleteNode(tree->right, point, dim);
-        }
+        free(tree);
+        return NULL;
     }
     return tree;
 }
 
 // ============== ELSE ======================
 void printTree(Tree *node, int level) {
-    // AI -- remove
     if (node == NULL) {
         return;
     }
 
-    // Отступы для наглядности
     for (int i = 0; i < level; i++) {
         printf("  ");
     }
 
-    // Печать информации об узле
     printf("Split by dim %d: (", node->splitByDim);
     for (int i = 0; i < node->dim; i++) {
         printf("%lf", node->point[i]);
@@ -196,18 +183,6 @@ void printTree(Tree *node, int level) {
     }
     printf(")\n");
 
-    // Рекурсивный вызов для левого и правого поддерева
     printTree(node->left, level + 1);
     printTree(node->right, level + 1);
 }
-
-// Освобождение памяти
-// void freeTree(Tree *node) {
-//     if (node == NULL) {
-//         return;
-//     }
-//     freeTree(node->left);
-//     freeTree(node->right);
-//     free(node->point);
-//     free(node);
-// }
