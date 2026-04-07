@@ -1,7 +1,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 typedef struct Tree {
     int dim;
@@ -146,12 +145,10 @@ double distance(double *point1, double *point2, int dim) {
     return dist;
 }
 
-
 void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance, Tree *exclude) {
     if (tree == NULL || tree == exclude) {
         return;
     }
-
 
     double currentDistance = distance(tree->point, point, dim);
 
