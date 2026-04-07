@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -133,6 +134,66 @@ Tree *findMax(Tree *tree, int dimToCompare, int dim) {
     }
     return maxNode;
 }
+
+// ============== FIND NEAREST ======================
+
+double distance(double *point1, double *point2, int dim) {
+    double dist = 0.0;
+    for (int i = 0; i < dim; i++) {
+        double diff = point1[i] - point2[i];
+        dist += diff * diff;
+    }
+    return dist;
+}
+
+
+void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance, Tree *exclude) {
+    if (tree == NULL || tree == exclude) {
+        return;
+    }
+
+
+    double currentDistance = distance(tree->point, point, dim);
+
+
+    if (currentDistance < *minDistance) {
+        *minDistance = currentDistance;
+        *nearest = tree;
+    }
+
+    int axis = tree->splitByDim;
+    if (point[axis] < tree->point[axis]) {
+        findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
+
+        if (pow(point[axis] - tree->point[axis], 2) < *minDistance) {
+            // right tree
+            findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
+        }
+    } else {
+        findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
+        if (pow(point[axis] - tree->point[axis], 2) < *minDistance) {
+            // left tree
+            findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
+        }
+    }
+}
+
+Tree *findNearest(Tree *root, double *point, int dim) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    Tree *nearest = NULL;
+    double minDistance = INFINITY;
+    // check is point exist
+    Tree *exclude = getPointInTree(root, point, dim);
+    if (exclude == NULL) return NULL;
+
+    findNearestRecursive(root, point, dim, &nearest, &minDistance, exclude);
+
+    return nearest;
+}
+
 
 // ============== REMOVE POINT ======================
 Tree *deleteNode(Tree *root, double *point, int dim) {
