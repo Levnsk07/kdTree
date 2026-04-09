@@ -1,31 +1,81 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "kdTree.c"
 
-int main() {
-    int dim = 2;
-    double pointsArray[][2] = {{3, 6}, {17, 15}, {13, 15}, {6, 12}, {9, 1}, {2, 7}, {10, 19}};
-    int count = sizeof(pointsArray) / sizeof(pointsArray[0]);
+#define COUNT_OF_ARGUMENTS 2
+#define SEPARATOR ','
 
-    double **points = malloc(count * sizeof(int*));
-    for (int i = 0; i < count; i++) {
-        points[i] = pointsArray[i];
+int main(int argc, char **argv) {
+    // ===== OPEN FILE =====
+    /*
+    if (argc != COUNT_OF_ARGUMENTS) {
+        printf("Not enough arguments provided\n");
+        return 1;
+    }
+    FILE *file = fopen(argv[1], "r");
+    */
+    FILE *file = fopen("lidar.csv", "r");
+
+    if (file == NULL) {
+        printf("Ошибка при открытии файла!\n");
+        return 1;
     }
 
-    Tree *tree;
-    buildKDTree(&tree, points, count, 0, dim, 0);
+    // ===== FIND COUNT OF LINE IN FILE =====
 
-    printf("KD-Tree:\n");
-    printTree(tree, 0);
-    double point[2]={2,7};
+    int lines = 0;
+    int ch;
 
-    printf("====================\n");
-    deleteNode(tree,point,2);
-    printTree(tree,0);
+    // Читаем посимвольно до конца файла
+    while ((ch = fgetc(file)) != EOF) {
+        if (ch == '\n') {
+            lines++;
+        }
+    }
 
-    
+    // ===== READ POINTS =====
+    // char *line = malloc(256 * sizeof(char));
+    char line[256];
+
+    int dim = 1;
+
+    // get dim
+    double *arr = malloc(sizeof(double) * 100);
+    fscanf(file, "%s", line);
+    char *token = strtok(line, ",");
+    while (token != NULL) {
+        arr[dim++] = atof(token);
+        token = strtok(NULL, ",");
+    }
+    free(arr);
+
+    file = fopen("lidar.csv", "r");
+
+    double **points = malloc(lines * sizeof(double *));
+    // while (fscanf(file, "%s", line) == 1) {
+    // }
+
+    for (int i = 0; i < lines; i++) {
+        fscanf(file, "%s", line);
+        points[i] = malloc(sizeof(double) * dim);
+        token = strtok(line, ",");
+        for (int j = 0; j < dim; j++) {
+            points[i][j] = atof(token);
+            token = strtok(NULL, ",");
+        }
+    }
+
+    for (int i = 0; i < lines; i++) {
+        for (int j = 0; j < dim; j++) {
+            printf("%lf ", points[i][j]);
+        }
+        printf("\n");
+    }
+
+    free(token);
+    // free(line);
 
     return 0;
 }
-
-
