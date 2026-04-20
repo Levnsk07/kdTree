@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "kdTree.h"
+
 typedef struct Tree {
     int dim;
     double *point;
@@ -174,7 +176,7 @@ void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, do
         }
     }
 }
-
+/*
 Tree *findNearest(Tree *root, double *point, int dim) {
     if (root == NULL) {
         return NULL;
@@ -189,6 +191,25 @@ Tree *findNearest(Tree *root, double *point, int dim) {
     findNearestRecursive(root, point, dim, &nearest, &minDistance, exclude);
 
     return nearest;
+}*/
+
+double *findNearest(Tree *root, double *point, int dim) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    Tree *nearest = NULL;
+    double minDistance = INFINITY;
+    // check is point exist
+    Tree *exclude = getPointInTree(root, point, dim);
+    if (exclude == NULL) {
+        printf("Point in tree not found \n");
+        return NULL;
+    };
+
+    findNearestRecursive(root, point, dim, &nearest, &minDistance, exclude);
+
+    return nearest->point;
 }
 
 
