@@ -1,3 +1,15 @@
+/*
+# TODO
+1. добавить satic
+2. сдлеать по API
+	- add
+	- remove
+3. free tree
+*/
+
+
+
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +23,9 @@ typedef struct Tree {
     struct Tree *right;
     struct Tree *left;
     struct Tree *parent;
+
+	int clasterID;
+    
 } Tree;
 
 // ============== INIT/ADD POINT ======================
@@ -22,6 +37,8 @@ Tree *initKDTree(int dim) {
     tree->right = NULL;
     tree->left = NULL;
     tree->parent = NULL;
+  	tree->clasterID=-1;
+
     return tree;
 }
 
