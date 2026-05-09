@@ -17,33 +17,31 @@ typedef struct Tree {
     int clasterID;
 } Tree;
 
-static double distance(double *a, double *b, int dim);
-
-static Tree *initKDTree(int dim);
-
-static int compare(const void *a, const void *b);
-
-static void buildKDTreeAPI(Tree **tree, double **points, int right, int left, int dim, int depth);
-
+/// ============== Build
 Tree *buildKdTree(double **points, int right, int dim);
 
+/// ============== Get Point
 Tree *getPointInTree(Tree *tree, double *point, int dim);
 
-static Tree *findMin(Tree *tree, int dimToCompare, int dim);
+// double *findNearest(Tree *root, double *point, int dim);
+Tree *findNearest(Tree *root, double *point, int dim);
 
-static Tree *findMax(Tree *tree, int dimToCompare, int dim);
+/// ============== Add/Remove Point
+Tree *deleteNodeV1(Tree *root, double *point, int dim); // TODO Test and choose only one
+Tree *deleteNodeV2(Tree *root, double *point, int dim);
 
-static void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance, Tree *exclude);
+Tree *insertPoint(Tree *root, double *point, int dim);
 
-// Tree *findNearest(Tree *root, double *point, int dim);
-double *findNearest(Tree *root, double *point, int dim);
+/// ============== Free Tree
+void freeKDtree(Tree *tree);
 
-Tree *deleteNode(Tree *root, double *point, int dim);
+/// ============== Else functions
 
 void printTree(Tree *node, int level);
 
 
-// Clusters
+/// ============== Clustering
+
 int *dbscan(Tree *root, double **points, int numPoints, int dim, double eps, int minPts);
 
 

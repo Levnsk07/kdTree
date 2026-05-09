@@ -100,6 +100,7 @@ int main(int argc, char **argv) {
 
     // ======================== COMMANDS =======================================
     if (strcmp(argv[2], "-kd_insert") == 0) {
+        // ADD Point
         FILE *writer = fopen(argv[1], "a");
 
         if (!writer) {
@@ -107,7 +108,27 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        fprintf(writer, "\n%s", argv[3]);
+        double *point = malloc(sizeof(double) * dim);
+        if (!point) {
+            printf("Ошибка при выделении памяти!\n");
+            return 1;
+        }
+
+        char *linePoint = argv[3];
+        char *token = strtok(linePoint, ",");
+        int temp = 0;
+        while (token != NULL && temp < dim) {
+            point[temp] = atof(token);
+            token = strtok(NULL, ",");
+            temp++;
+        }
+
+        tree = insertPoint(tree, point, dim);
+
+
+        // fprintf(writer, "\n%s", argv[3]);
+
+
         fclose(writer);
         printf("Точка добавлена в файл: %s\n", argv[1]);
     } else if (strcmp(argv[2], "-kd_nearest") == 0) {
@@ -126,7 +147,7 @@ int main(int argc, char **argv) {
             temp++;
         }
 
-        double *nearest = findNearest(tree, point, dim);
+        Tree *nearest = findNearest(tree, point, dim);
         if (!nearest) {
             // TODO надо ли искать только в уже существующих?
             printf("Ошибка при поиске ближайшей точки!\n");
@@ -136,7 +157,7 @@ int main(int argc, char **argv) {
 
         printf("Nearest Point: ");
         for (int i = 0; i < dim; i++) {
-            printf("%lf ", nearest[i]);
+            printf("%lf ", nearest->point[i]);
         }
         printf("\n");
         free(point);
@@ -174,10 +195,18 @@ int main(int argc, char **argv) {
         writePointsToFiles(points, clusterIds, lines, dim, maxClusterId, "dbscan");
         printf("Результаты DBSCAN сохранены в файлы: dbscan_X.csv\n");
         free(clusterIds);
+
+    } else if (strcmp(argv[2], "-cmeans,") == 0) {
+        printf("Fredber does not exist \n");
+        printf("Nothing happend \n");
+        printf("HE does not exist \n");
+        printf("HE does not exist \n");
+        printf("HE does not exist \n");
     }
 
 
     // ============ FREE==============
+    freeKDtree(tree);
     for (int i = 0; i < lines; i++) {
         free(points[i]);
     }
