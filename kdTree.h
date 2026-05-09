@@ -13,23 +13,27 @@ typedef struct Tree {
     struct Tree *right;
     struct Tree *left;
     struct Tree *parent;
+
+    int clasterID;
 } Tree;
 
-double distance(double *a, double *b, int dim);
+static double distance(double *a, double *b, int dim);
 
-Tree *initKDTree(int dim);
+static Tree *initKDTree(int dim);
 
-int compare(const void *a, const void *b);
+static int compare(const void *a, const void *b);
 
-void buildKDTree(Tree **tree, double **points, int right, int left, int dim, int depth);
+static void buildKDTreeAPI(Tree **tree, double **points, int right, int left, int dim, int depth);
+
+Tree *buildKdTree(double **points, int right, int dim);
 
 Tree *getPointInTree(Tree *tree, double *point, int dim);
 
-Tree *findMin(Tree *tree, int dimToCompare, int dim);
+static Tree *findMin(Tree *tree, int dimToCompare, int dim);
 
-Tree *findMax(Tree *tree, int dimToCompare, int dim);
+static Tree *findMax(Tree *tree, int dimToCompare, int dim);
 
-void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance, Tree *exclude);
+static void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance, Tree *exclude);
 
 // Tree *findNearest(Tree *root, double *point, int dim);
 double *findNearest(Tree *root, double *point, int dim);

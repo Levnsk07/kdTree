@@ -4,13 +4,14 @@
 #include <math.h>
 
 // #include "kdTree.c"
-#include "kdTree.h"
-// #include "clustering.c"
+#include "kdTree.c"
+#include "clustering.c"
 
 #define COUNT_OF_ARGUMENTS_MIN 3
 #define SEPARATOR ','
 
-void writePointsToFiles(double **points, int *clusterIds, int num_points, int dim, int maxClusterId, const char *base_filename) {
+void writePointsToFiles(double **points, int *clusterIds, int num_points, int dim, int maxClusterId,
+                        const char *base_filename) {
     for (int clusterId = 1; clusterId <= maxClusterId; clusterId++) {
         char filename[256];
         snprintf(filename, sizeof(filename), "./%s_%d.csv", base_filename, clusterId);
@@ -44,7 +45,6 @@ void writePointsToFiles(double **points, int *clusterIds, int num_points, int di
 }
 
 int main(int argc, char **argv) {
-
     if (argc < COUNT_OF_ARGUMENTS_MIN) {
         // TODO
         printf("Usage: %s <file.csv> <-kd_insert|-kd_nearest|-dbscan|-cmeans> <args>\n", argv[0]);
@@ -96,8 +96,7 @@ int main(int argc, char **argv) {
     fclose(file);
 
     // ===== BUILD k-d TREE =====
-    Tree *tree = initKDTree(dim);
-    buildKDTree(&tree, points, lines, 0, dim, 0);
+    Tree *tree = buildKdTree(points, lines, dim);
 
     // ======================== COMMANDS =======================================
     if (strcmp(argv[2], "-kd_insert") == 0) {
@@ -128,7 +127,8 @@ int main(int argc, char **argv) {
         }
 
         double *nearest = findNearest(tree, point, dim);
-        if (!nearest) { // TODO надо ли искать только в уже существующих?
+        if (!nearest) {
+            // TODO надо ли искать только в уже существующих?
             printf("Ошибка при поиске ближайшей точки!\n");
             free(point);
             return 1;
@@ -142,7 +142,6 @@ int main(int argc, char **argv) {
         free(point);
         free(nearest);
     } else if (strcmp(argv[2], "-dbscan") == 0) {
-
         char *args = argv[3];
         char *token = strtok(args, ",");
         double eps = atof(token);
@@ -176,9 +175,6 @@ int main(int argc, char **argv) {
         printf("Результаты DBSCAN сохранены в файлы: dbscan_X.csv\n");
         free(clusterIds);
     }
-
-
-
 
 
     // ============ FREE==============
