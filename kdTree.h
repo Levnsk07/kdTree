@@ -43,7 +43,7 @@ void printTree(Tree *node, int level);
 
 /// ============== Clustering
 
-int *dbscan(Tree *root, double **points, int numPoints, int dim, double eps, int minPts);
+int dbscanCluster(Tree *root, double eps, int minPts, int count);
 
 bool fuzzyCMeans(Tree *root, int pointsCount, int dim, int clustersCount);
 
