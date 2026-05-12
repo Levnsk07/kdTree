@@ -14,7 +14,8 @@ typedef struct Tree {
     struct Tree *left;
     struct Tree *parent;
 
-    int clasterID;
+    int clusterIdx;
+    double *memberShip;
 } Tree;
 
 /// ============== Build
@@ -43,6 +44,8 @@ void printTree(Tree *node, int level);
 /// ============== Clustering
 
 int *dbscan(Tree *root, double **points, int numPoints, int dim, double eps, int minPts);
+
+bool fuzzyCMeans(Tree *root, int pointsCount, int dim, int clustersCount);
 
 
 #endif //K_DTREE_KDTREE_H

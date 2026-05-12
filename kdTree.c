@@ -12,7 +12,8 @@ typedef struct Tree {
     struct Tree *left;
     struct Tree *parent;
 
-    int clasterID;
+    int clusterIdx;
+    double *memberShip;
 } Tree;
 
 // ============== INIT ======================
@@ -24,7 +25,8 @@ static Tree *initKDTree(int dim) {
     tree->right = NULL;
     tree->left = NULL;
     tree->parent = NULL;
-    tree->clasterID = -1;
+    tree->clusterIdx = -1;
+    tree->memberShip = 0;
 
     return tree;
 }
@@ -318,6 +320,7 @@ Tree *insertPoint(Tree *root, double *point, int dim) {
 
 
 // ============== REMOVE POINT ======================
+
 Tree *deleteNodeV2(Tree *root, double *point, int dim){
     if(root == NULL)
         return NULL;

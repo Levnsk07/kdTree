@@ -3,13 +3,15 @@
 #include <string.h>
 #include <math.h>
 
+#include "kdTree.h"
 // #include "kdTree.c"
-#include "kdTree.c"
-#include "clustering.c"
+// #include "clustering.c"
 
 #define COUNT_OF_ARGUMENTS_MIN 3
 #define SEPARATOR ','
 
+
+// TODO Сделать через чтение в дереве номера clusterIdx;
 void writePointsToFiles(double **points, int *clusterIds, int num_points, int dim, int maxClusterId,
                         const char *base_filename) {
     for (int clusterId = 1; clusterId <= maxClusterId; clusterId++) {
@@ -98,6 +100,8 @@ int main(int argc, char **argv) {
     // ===== BUILD k-d TREE =====
     Tree *tree = buildKdTree(points, lines, dim);
 
+    //free(points) // TODO Очищать массив точек
+
     // ======================== COMMANDS =======================================
     if (strcmp(argv[2], "-kd_insert") == 0) {
         // ADD Point
@@ -162,7 +166,7 @@ int main(int argc, char **argv) {
         printf("\n");
         free(point);
         free(nearest);
-    } else if (strcmp(argv[2], "-dbscan") == 0) {
+    } else if (strcmp(argv[2], "-dbscan") == 0) { // TODO сделать без использования массива точек
         char *args = argv[3];
         char *token = strtok(args, ",");
         double eps = atof(token);
@@ -197,11 +201,16 @@ int main(int argc, char **argv) {
         free(clusterIds);
 
     } else if (strcmp(argv[2], "-cmeans,") == 0) {
-        printf("Fredber does not exist \n");
-        printf("Nothing happend \n");
-        printf("HE does not exist \n");
-        printf("HE does not exist \n");
-        printf("HE does not exist \n");
+        char *endptr = NULL;
+        int clusters = strtol(argv[3], &endptr, 10);
+        if(*endptr != '\0' || clusters <= 0) printf("Error: invalid clusters count\n");
+        printf("Cmeans operation\n");
+        if (! fuzzyCMeans(tree,lines, dim, clusters)) {
+            printf("SUCCESS\n");
+        }
+
+        // TODO Сделать вывод в файл
+
     }
 
 
