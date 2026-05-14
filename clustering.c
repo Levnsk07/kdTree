@@ -329,8 +329,6 @@ int dbscanCluster(Tree *root, double eps, int minPts, int count) {
             continue;
         }
 
-
-        currentCluster++;
         start->clusterIdx = currentCluster;
 
 
@@ -376,10 +374,9 @@ int dbscanCluster(Tree *root, double eps, int minPts, int count) {
                     }
                 }
             }
-
             free(subNeighbors);
         }
-
+        currentCluster++;
         free(neighbors);
     }
 

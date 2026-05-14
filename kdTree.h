@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 // Структура узла k-d дерева
 typedef struct Tree {
@@ -18,20 +19,24 @@ typedef struct Tree {
     double *memberShip;
 } Tree;
 
-/// ============== Build
-Tree *buildKdTree(double **points, int right, int dim);
+/// ============== Build K-D tree
+Tree *buildKDTree(double **points, int count, int dim);
 
 /// ============== Get Point
 Tree *getPointInTree(Tree *tree, double *point, int dim);
 
-// double *findNearest(Tree *root, double *point, int dim);
+/// ============== distance between points (вопрос, оставлять или нет)
+double distancePoint(double *point1, double *point2, int dim);
+
+/// ============== Insert point
+Tree *insertPoint(Tree *root, double *point, int dim);
+
+// =============== Find nearest point
 Tree *findNearest(Tree *root, double *point, int dim);
 
-/// ============== Add/Remove Point
-Tree *deleteNodeV1(Tree *root, double *point, int dim); // TODO Test and choose only one
-Tree *deleteNodeV2(Tree *root, double *point, int dim);
+/// ============== Remove Point 
+Tree *deleteNode(Tree *root, double *point, int dim);
 
-Tree *insertPoint(Tree *root, double *point, int dim);
 
 /// ============== Free Tree
 void freeKDtree(Tree *tree);

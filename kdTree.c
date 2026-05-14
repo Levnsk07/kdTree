@@ -4,47 +4,23 @@
 
 #include "kdTree.h"
 
-typedef struct Tree {
-    int dim;
-    double *point;
-    int splitByDim;
-    struct Tree *right;
-    struct Tree *left;
-    struct Tree *parent;
 
-    int clusterIdx;
-    double *memberShip;
-} Tree;
-
-// ============== INIT ======================
-static Tree *initKDTree(int dim) {
-    Tree *tree = malloc(sizeof(Tree));
-    tree->dim = dim;
-    tree->splitByDim = 0;
-    tree->point = malloc(sizeof(double) * dim);
-    tree->right = NULL;
-    tree->left = NULL;
-    tree->parent = NULL;
-    tree->clusterIdx = -1;
-    tree->memberShip = 0;
-
-    return tree;
-}
-
-/// ====== Build
+// подключил заголовк, убрал лишнее определение структуры дерева
 
 
-static int sortDim;
+static int sortDim = 0;
+
+// ============== STATIC FUNC =========================
 
 static int compare(const void *a, const void *b) {
     const double *pa = *(const double **) a;
     const double *pb = *(const double **) b;
-    if (pa[sortDim] < pb[sortDim]) return -1;
-    if (pa[sortDim] > pb[sortDim]) return 1;
+    if(pa[sortDim] < pb[sortDim]) return -1;
+    if(pa[sortDim] > pb[sortDim]) return 1;
     return 0;
 }
 
-static bool pointsEqual(double *point1, double *point2, int dim) {
+static bool pointsEqual(double *point1, double *point2, int dim){
     bool isEqual = true;
     for (int i = 0; i < dim; i++) {
         if (point1[i] != point2[i]) {
@@ -55,7 +31,29 @@ static bool pointsEqual(double *point1, double *point2, int dim) {
     return isEqual;
 }
 
-static void buildKDTreeAPI(Tree **tree, double **points, int right, int left, int dim, int depth) {
+static void copyPoint(double *pointDst, double *pointSrc, int dim){
+    for(int i=0; i < dim; i++)
+        pointDst[i] = pointSrc[i];
+}
+
+static Tree *createNode (double *point, int dim, int splitByDim, Tree *parent){
+    Tree *newNode = (Tree*)malloc(sizeof(Tree));
+    newNode->dim = dim;
+    newNode->point = (double*)malloc(dim*sizeof(double));
+    copyPoint(newNode->point, point, dim);
+    newNode->splitByDim = splitByDim;
+    newNode->clusterIdx = -1;
+    newNode->memberShip = NULL;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    newNode->parent = parent;
+
+    return newNode;
+}
+
+// ================= BUILD K-D TREE ============================
+
+static void buildKDTreeRecursive(Tree **tree, double **points, int right, int left, int dim, int depth) {
     if (right <= left) {
         *tree = NULL;
         return;
@@ -65,16 +63,14 @@ static void buildKDTreeAPI(Tree **tree, double **points, int right, int left, in
     qsort(points + left, right - left, sizeof(double *), compare);
     int med = left + (right - left) / 2;
 
-    Tree *node = initKDTree(dim);
-    node->point = points[med];
-    node->splitByDim = sortDim;
+    Tree *node = createNode(points[med], dim, sortDim, NULL);
 
-    buildKDTreeAPI(&node->left, points, med, left, dim, depth + 1);
+    buildKDTreeRecursive(&node->left, points, med, left, dim, depth + 1);
     if (node->left != NULL) {
         node->left->parent = node;
     }
 
-    buildKDTreeAPI(&node->right, points, right, med + 1, dim, depth + 1);
+    buildKDTreeRecursive(&node->right, points, right, med + 1, dim, depth + 1);
     if (node->right != NULL) {
         node->right->parent = node;
     }
@@ -82,42 +78,75 @@ static void buildKDTreeAPI(Tree **tree, double **points, int right, int left, in
     *tree = node;
 }
 
-Tree *buildKdTree(double **points, int right, int dim) {
-    Tree *tree = initKDTree(dim);
-    buildKDTreeAPI(&tree, points, right, 0, dim, 0);
+Tree *buildKDTree(double **points, int count, int dim){
+    Tree *tree = NULL;
+
+    if(points == NULL || count <= 0 || dim <= 0)
+        return NULL;
+    
+    buildKDTreeRecursive(&tree, points, count, 0, dim, 0);
+
     return tree;
 }
 
-// ============== GET POINT ======================
+// ============== ADD POINT ======================
 
+// добавил отдельную функцию для добавления точки в K-D дерево
+
+static Tree *insertPointRecursive(Tree *root, double *point, int dim, int splitByDim, Tree *parent){
+    if(root == NULL)
+        return createNode(point, dim, splitByDim, parent);
+
+    if(pointsEqual(root->point, point, dim))
+        return root;
+
+    int axis = root->splitByDim;
+    int nextSplitByDim = (axis + 1) % dim;
+
+    if(point[axis] < root->point[axis])
+        root->left = insertPointRecursive(root->left, point, dim, nextSplitByDim, root);
+    else
+        root->right = insertPointRecursive(root->right, point, dim, nextSplitByDim, root);
+
+    return root;
+}
+
+
+Tree *insertPoint(Tree *root, double *point, int dim){
+    return insertPointRecursive(root, point, dim, 0, NULL);
+}
+
+// ============== GET POINT ======================
+// чуть переписал, тк до этого работал за O(n), как DFS. Теперь корректно
 Tree *getPointInTree(Tree *tree, double *point, int dim) {
     if (tree == NULL) {
         return NULL;
     }
 
-    int isEqual = 1;
-    for (int i = 0; i < dim; i++) {
-        if (tree->point[i] != point[i]) {
-            isEqual = 0;
-            break;
-        }
-    }
-
-    if (isEqual) {
+    if (pointsEqual(tree->point, point, dim)) {
         return tree;
     }
-    Tree *foundInLeft = getPointInTree(tree->left, point, dim);
-    if (foundInLeft != NULL) {
-        return foundInLeft;
-    }
-    Tree *foundInRight = getPointInTree(tree->right, point, dim);
-    if (foundInRight != NULL) {
-        return foundInRight;
+
+    int axis = tree->splitByDim;
+
+    if(point[axis] < tree->point[axis])
+        return getPointInTree(tree->left, point, dim);
+    else if(point[axis] > tree->point[axis])
+        return getPointInTree(tree->right, point, dim);
+    else{
+        Tree *foundInLeft = getPointInTree(tree->left, point, dim);
+        if (foundInLeft != NULL) {
+            return foundInLeft;
+        }
+        Tree *foundInRight = getPointInTree(tree->right, point, dim);
+        if (foundInRight != NULL) {
+            return foundInRight;
+        }
     }
     return NULL;
 }
 
-static Tree *findMin(Tree *tree, int dimToCompare, int dim) {
+Tree *findMin(Tree *tree, int dimToCompare, int dim) {
     if (tree == NULL) {
         return NULL;
     }
@@ -139,7 +168,7 @@ static Tree *findMin(Tree *tree, int dimToCompare, int dim) {
     return minNode;
 }
 
-static Tree *findMax(Tree *tree, int dimToCompare, int dim) {
+Tree *findMax(Tree *tree, int dimToCompare, int dim) {
     if (tree == NULL) {
         return NULL;
     }
@@ -166,74 +195,21 @@ static Tree *findMax(Tree *tree, int dimToCompare, int dim) {
 
 // ============== FIND NEAREST ======================
 
-static double distance(double *point1, double *point2, int dim) {
-    double dist = 0.0;
+double distancePoint(double *point1, double *point2, int dim) {
+    double dist = 0.0, diff = 0.0;
     for (int i = 0; i < dim; i++) {
-        double diff = point1[i] - point2[i];
+        diff = point1[i] - point2[i];
         dist += diff * diff;
     }
-    return dist;
+    return sqrt(dist);
 }
 
-/*
-static void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance,
-                                 Tree *exclude) {
+static void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance, Tree *exclude) {
     if (tree == NULL || tree == exclude) {
         return;
     }
 
-    double currentDistance = distance(tree->point, point, dim);
-
-
-    if (currentDistance < *minDistance) {
-        *minDistance = currentDistance;
-        *nearest = tree;
-    }
-
-    int axis = tree->splitByDim;
-    if (point[axis] < tree->point[axis]) {
-        findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
-
-        if (pow(point[axis] - tree->point[axis], 2) < *minDistance) {
-            // right tree
-            findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
-        }
-    } else {
-        findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
-        if (pow(point[axis] - tree->point[axis], 2) < *minDistance) {
-            // left tree
-            findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
-        }
-    }
-}
-
-
-double *findNearest(Tree *root, double *point, int dim) {
-    if (root == NULL) {
-        return NULL;
-    }
-
-    Tree *nearest = NULL;
-    double minDistance = INFINITY;
-    // check is point exist
-    Tree *exclude = getPointInTree(root, point, dim);
-    if (exclude == NULL) {
-        printf("Point in tree not found \n");
-        return NULL;
-    };
-
-    findNearestRecursive(root, point, dim, &nearest, &minDistance, exclude);
-
-    return nearest->point;
-}*/
-
-static void findNearestRecursive(Tree *tree, double *point, int dim, Tree **nearest, double *minDistance,
-                                 Tree *exclude) {
-    if (tree == NULL || tree == exclude) {
-        return;
-    }
-
-    double currentDistance = distance(tree->point, point, dim);
+    double currentDistance = distancePoint(tree->point, point, dim);
 
 
     if (currentDistance < *minDistance) {
@@ -245,13 +221,13 @@ static void findNearestRecursive(Tree *tree, double *point, int dim, Tree **near
     double diff = point[axis] - tree->point[axis];
     if (diff < 0) {
         findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
-        if (diff * diff < *minDistance) {
+        if (diff*diff < *minDistance) {
             // right tree
             findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
         }
     } else {
         findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
-        if (diff * diff < *minDistance) {
+        if (diff*diff < *minDistance) {
             // left tree
             findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
         }
@@ -275,53 +251,10 @@ Tree *findNearest(Tree *root, double *point, int dim) {
     return nearest;
 }
 
-// ============== ADD POINT ======================
-
-static void copyPoint(double *pointDst, double *pointSrc, int dim) {
-    for (int i = 0; i < dim; i++)
-        pointDst[i] = pointSrc[i];
-}
-
-static Tree *createNode(double *point, int dim, int splitByDim, Tree *parent) {
-    Tree *newNode = (Tree *) malloc(sizeof(Tree));
-    newNode->dim = dim;
-    newNode->point = (double *) malloc(dim * sizeof(double));
-    copyPoint(newNode->point, point, dim);
-    newNode->splitByDim = splitByDim;
-    newNode->left = NULL;
-    newNode->right = NULL;
-    newNode->parent = parent;
-
-    return newNode;
-}
-
-static Tree *insertPointRecursive(Tree *root, double *point, int dim, int splitByDim, Tree *parent) {
-    if (root == NULL)
-        return createNode(point, dim, splitByDim, parent);
-
-    if (pointsEqual(root->point, point, dim))
-        return root;
-
-    int axis = root->splitByDim;
-    int nextSplitByDim = (axis + 1) % dim;
-
-    if (point[axis] < root->point[axis])
-        root->left = insertPointRecursive(root->left, point, dim, nextSplitByDim, root);
-    else
-        root->right = insertPointRecursive(root->right, point, dim, nextSplitByDim, root);
-
-    return root;
-}
-
-
-Tree *insertPoint(Tree *root, double *point, int dim) {
-    return insertPointRecursive(root, point, dim, 0, NULL);
-}
-
 
 // ============== REMOVE POINT ======================
 
-Tree *deleteNodeV2(Tree *root, double *point, int dim){
+Tree *deleteNode(Tree *root, double *point, int dim){
     if(root == NULL)
         return NULL;
 
@@ -329,14 +262,14 @@ Tree *deleteNodeV2(Tree *root, double *point, int dim){
         if(root->right != NULL){
             Tree *minNode = findMin(root->right, root->splitByDim, dim);
             copyPoint(root->point, minNode->point, dim);
-            root->right = deleteNodeV2(root->right, minNode->point, dim);
+            root->right = deleteNode(root->right, minNode->point, dim);
             if(root->right != NULL)
                 root->right->parent = root;
         }
         else if(root->left != NULL){
             Tree *maxNode = findMax(root->left, root->splitByDim, dim);
             copyPoint(root->point, maxNode->point, dim);
-            root->left = deleteNodeV2(root->left, maxNode->point, dim);
+            root->left = deleteNode(root->left, maxNode->point, dim);
             if(root->left != NULL)
                 root->left->parent = root;
         }
@@ -351,21 +284,21 @@ Tree *deleteNodeV2(Tree *root, double *point, int dim){
 
     int axis = root->splitByDim;
     if(point[axis] < root->point[axis]){
-        root->left = deleteNodeV2(root->left, point, dim);
+        root->left = deleteNode(root->left, point, dim);
         if(root->left != NULL)
             root->left->parent = root;
     }
     else if(point[axis] > root->point[axis]){
-        root->right = deleteNodeV2(root->right, point, dim);
+        root->right = deleteNode(root->right, point, dim);
         if(root->right != NULL)
             root->right->parent = root;
     }
     else{
-        root->left = deleteNodeV2(root->left, point, dim);
+        root->left = deleteNode(root->left, point, dim);
         if(root->left != NULL)
             root->left->parent = root;
 
-        root->right = deleteNodeV2(root->right, point, dim);
+        root->right = deleteNode(root->right, point, dim);
         if(root->right != NULL)
             root->right->parent = root;
     }
@@ -374,43 +307,14 @@ Tree *deleteNodeV2(Tree *root, double *point, int dim){
 }
 
 
-
-
-Tree *deleteNodeV1(Tree *root, double *point, int dim) {
-    Tree *tree = getPointInTree(root, point, dim);
-
-    if (tree == NULL) {
-        return NULL;
-    }
-
-    if (tree->right != NULL) {
-        Tree *minNode = findMin(tree->right, tree->splitByDim, dim);
-
-        for (int i = 0; i < dim; i++) {
-            tree->point[i] = minNode->point[i];
-        }
-        tree->right = deleteNodeV1(tree->right, minNode->point, dim);
-    } else if (tree->left != NULL) {
-        Tree *maxNode = findMax(tree->left, tree->splitByDim, dim);
-
-        for (int i = 0; i < dim; i++) {
-            tree->point[i] = maxNode->point[i];
-        }
-
-        tree->left = deleteNodeV1(tree->left, maxNode->point, dim);
-    } else {
-        free(tree);
-        return NULL;
-    }
-    return tree;
-}
-
 // ============== FREE TREE ======================
 void freeKDtree(Tree *tree) {
     if (tree == NULL)
         return;
     freeKDtree(tree->left);
     freeKDtree(tree->right);
+    if(tree->memberShip != NULL)
+        free(tree->memberShip);
     free(tree->point);
     free(tree);
 }

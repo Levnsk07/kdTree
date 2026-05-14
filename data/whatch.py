@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 def plot_points_from_csv(csv_file, x_col='x', y_col='y', label_col=None, title='Scatter Plot of Points', output_file='points_plot.png'):
     """
@@ -45,7 +46,7 @@ def plot_points_from_csv(csv_file, x_col='x', y_col='y', label_col=None, title='
 # Пример использования
 if __name__ == "__main__":
     # Укажите путь к вашему CSV-файлу
-    csv_file = "points.csv"  # Замените на ваш файл
+    csv_file = Path(__file__).parent / "testCSV.csv"  # Замените на ваш файл
 
     # Пример CSV-файла (points.csv):
     # x,y,cluster
