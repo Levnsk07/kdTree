@@ -10,21 +10,22 @@ LIB_SRCS = kdTree.c clustering.c
 OBJS    = $(SRCS:.c=.o)
 LIB_OBJS = $(LIB_SRCS:.c=.o)
 LIB_NAME = libkdTree.so
-MAIN_NAME = ./build/main
-LIB_PATH = ./build/$(LIB_NAME)
+MAIN_NAME = $(BUILD_DIR)/robot_spatial.exe
+TEST_NAME = $(BUILD_DIR)/test.exe
+LIB_PATH = $(BUILD_DIR)/$(LIB_NAME)
 
 # Directories
-BUILD_DIR = ./build
+BUILD_DIR = build
 
 # Phony targets
-.PHONY: clean all
+.PHONY: clean all test
 
 # Default target
 all: $(BUILD_DIR) $(LIB_PATH) $(MAIN_NAME)
 
 # Create build directory
 $(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+	if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
 
 # Compile dynamic library object files
 $(LIB_OBJS): %.o: %.c
@@ -40,8 +41,19 @@ main.o: main.c
 
 # Build main executable
 $(MAIN_NAME): main.o $(LIB_PATH)
-	$(CC) $(CFLAGS) -o $@ $^ -L$(BUILD_DIR) -lkdTree $(LDLIBS)
+	$(CC) $(CFLAGS) -o $@ main.o $(LIB_PATH) $(LDLIBS)
+
+# Compile test object file
+Test.o: Test.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Build test executable
+test: $(BUILD_DIR) $(LIB_PATH) $(TEST_NAME)
+
+$(TEST_NAME): Test.o $(LIB_PATH)
+	$(CC) $(CFLAGS) -o $@ Test.o $(LIB_PATH) $(LDLIBS)
 
 # Clean build directory
 clean:
-	rm -rf $(BUILD_DIR)
+	if exist $(BUILD_DIR) rmdir /S /Q $(BUILD_DIR)
+	-del /Q *.o

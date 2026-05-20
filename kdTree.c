@@ -221,13 +221,13 @@ static void findNearestRecursive(Tree *tree, double *point, int dim, Tree **near
     double diff = point[axis] - tree->point[axis];
     if (diff < 0) {
         findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
-        if (diff*diff < *minDistance) {
+        if (fabs(diff) < *minDistance) {
             // right tree
             findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
         }
     } else {
         findNearestRecursive(tree->right, point, dim, nearest, minDistance, exclude);
-        if (diff*diff < *minDistance) {
+        if (fabs(diff) < *minDistance) {
             // left tree
             findNearestRecursive(tree->left, point, dim, nearest, minDistance, exclude);
         }

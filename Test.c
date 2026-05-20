@@ -1,49 +1,61 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "kdTree.h"
 
-#include "kdTree.c"
-#include "clustering.c"
+void printTreeClusters(Tree *root, int clustersCount, int level){
+    if(root == NULL)
+        return;
+    
+    for(int i=0; i < root->dim; i++)
+        printf(" ");
+    
+    printf("Point: (");
+    for(int i=0; i < root->dim; i++){
+        printf("%lf", root->point[i]);
+        if(i < root->dim-1)
+            printf(", ");
+    }
+
+    printf("), cluster = %d, membership = [", root->clusterIdx);
+
+    for(int i=0; i < clustersCount; i++){
+        printf("%lf", root->memberShip[i]);
+        if(i < clustersCount-1)
+            printf(", ");
+    }
+
+    printf("]\n");
+    printTreeClusters(root->left, clustersCount, level+1);
+    printTreeClusters(root->right, clustersCount, level+1);
+}
 
 int main() {
     int dim = 2;
-    int numPoints = 5;
-    double **points = malloc(numPoints * sizeof(double *));
-    for (int i = 0; i < numPoints; i++) {
-        points[i] = malloc(dim * sizeof(double));
+    double pointsArray[][2] = {{1, 1}, {1, 2}, {2, 1},
+                                {8, 8}, {8, 9}, {9, 8},
+                                {20, 20}, {21, 20}, {20, 21}};
+    int count = sizeof(pointsArray) / sizeof(pointsArray[0]);
+
+    double **points = (double**)malloc(count * sizeof(double*));
+    for (int i = 0; i < count; i++) {
+        points[i] = pointsArray[i];
     }
 
-    // Пример данных: точки в 2D пространстве
-    points[0][0] = 1.0;
-    points[0][1] = 1.0;
-    points[1][0] = 1.5;
-    points[1][1] = 1.8;
-    points[2][0] = 5.0;
-    points[2][1] = 8.0;
-    points[3][0] = 8.0;
-    points[3][1] = 8.0;
-    points[4][0] = 3.0;
-    points[4][1] = 3.0;
+    Tree *tree = buildKDTree(points, count, dim);
 
-    // Построение KD-дерева
-    Tree *root = initKDTree(2);
-    buildKDTree(&root, points, numPoints, 0, dim, 0);
+    printf("KD-Tree:\n");
+    printTree(tree, 0);
+    // double point[2]={2,7};
 
-    // Параметры DBSCAN
-    double eps = 2.0;
-    int minPts = 2;
+    printf("====================\n");
+    fuzzyCMeans(tree, count, dim, 3);
+    printTreeClusters(tree, 3, 0);
 
-    // Запуск DBSCAN
-    int *cluster = dbscan(root, points, numPoints, dim, eps, minPts);
-
-    for (int i = 0; i < 4; i++) {
-        printf("cluster[%d]\n",cluster[i]);
-    }
-
-    // Освобождение памяти
-    for (int i = 0; i < numPoints; i++) {
-        free(points[i]);
-    }
     free(points);
+    freeKDtree(tree);
+    
 
     return 0;
 }
+
+

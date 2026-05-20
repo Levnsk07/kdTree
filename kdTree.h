@@ -37,17 +37,13 @@ Tree *findNearest(Tree *root, double *point, int dim);
 /// ============== Remove Point 
 Tree *deleteNode(Tree *root, double *point, int dim);
 
-
 /// ============== Free Tree
 void freeKDtree(Tree *tree);
 
 /// ============== Else functions
-
 void printTree(Tree *node, int level);
 
-
 /// ============== Clustering
-
 int dbscanCluster(Tree *root, double eps, int minPts, int count);
 
 bool fuzzyCMeans(Tree *root, int pointsCount, int dim, int clustersCount);

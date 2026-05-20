@@ -3,12 +3,15 @@
 #include <string.h>
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "kdTree.h"
 
 #define COUNT_OF_ARGUMENTS_MIN 4
 #define SEPARATOR ","
 #define NOISE_CLUSTER -1
+#define WRITE_CLUSTERS true
+#define WRITE_POINTS false
 
 void printAllFunc(){
     printf("All functions:\n");
@@ -214,11 +217,19 @@ bool readPointsFromCSV(const char *filePath, double ***points, int *count, int *
 
 }
 
-void writePointsTreeToFile(FILE *file, Tree *root, int dim, int clusterIdx){
+void writePointsTreeToFile(FILE *file, Tree *root, int dim, int clusterIdx, bool clusters){
     if(root == NULL || file == NULL)
         return;
     
-    if(root->clusterIdx == clusterIdx){
+    if(!clusters){
+        for(int i=0; i < dim; i++){
+            fprintf(file, "%lf", root->point[i]);
+            if(i < dim-1)
+                fprintf(file, ",");
+        }
+        fprintf(file, "\n");
+    }
+    else if(clusters && root->clusterIdx == clusterIdx){
         for(int i=0; i < dim; i++){
             fprintf(file, "%lf", root->point[i]);
             if(i < dim-1)
@@ -227,8 +238,8 @@ void writePointsTreeToFile(FILE *file, Tree *root, int dim, int clusterIdx){
         fprintf(file, "\n");
     }
 
-    writePointsTreeToFile(file, root->left, dim, clusterIdx);
-    writePointsTreeToFile(file, root->right, dim, clusterIdx);
+    writePointsTreeToFile(file, root->left, dim, clusterIdx, clusters);
+    writePointsTreeToFile(file, root->right, dim, clusterIdx, clusters);
 }
 
 bool writeClustersToFiles(Tree *tree, int dim, int maxClusterIdx, const char *baseFileName){
@@ -246,7 +257,7 @@ bool writeClustersToFiles(Tree *tree, int dim, int maxClusterIdx, const char *ba
         }
 
 
-        writePointsTreeToFile(file, tree, dim, clusterIdx);
+        writePointsTreeToFile(file, tree, dim, clusterIdx, WRITE_CLUSTERS);
 
         fclose(file);
         printf("File %s was created successfully!\n", fileName); // Отладочное сообщение
@@ -259,13 +270,38 @@ bool writeClustersToFiles(Tree *tree, int dim, int maxClusterIdx, const char *ba
             printf("Error: File %s was not created.\n", fileName);
             return false;
         }
-        writePointsTreeToFile(file, tree, dim, NOISE_CLUSTER);
+        writePointsTreeToFile(file, tree, dim, NOISE_CLUSTER, WRITE_CLUSTERS);
 
         fclose(file);
         printf("File %s was created successfully!\n", fileName); // Отладочное сообщение
         
     }
 
+    return true;
+}
+
+bool writePointsToFile(Tree *tree, int dim){
+    if(tree == NULL || dim <= 0)
+        return false;
+    
+    time_t now = time(NULL);
+    struct tm *local = localtime(&now);
+
+    char fileName[256];
+    strftime(fileName, sizeof(fileName), "csv_files/points_%Y-%m-%d_%H-%M-%S.csv", local);
+
+    printf("Attempt to create file: %s\n", fileName); // Отладочное сообщение
+        FILE *file = fopen(fileName, "w");
+        if (!file) {
+            printf("Error: File %s was not created.\n", fileName);
+            return false;
+        }
+    
+    writePointsTreeToFile(file, tree, dim, 0, WRITE_POINTS);
+
+    fclose(file);
+    printf("File %s was created successfully!\n", fileName); // Отладочное сообщение
+    
     return true;
 }
 
@@ -326,6 +362,12 @@ int main(int argc, char **argv) {
         printf("Point was successfully added to the K-D tree!\n");
         printf("KD-tree:\n");
         printTree(tree, 0);
+        if(!writePointsToFile(tree, pointDim)){
+            printf("Error: Cannot save points in CSV files.\n");
+            freeKDtree(tree);
+            freePointsArray(pointsCSV, countCSV);
+            return 1;
+        }
     } 
     else if (strcmp(operation, "-kd_delete") == 0){
         double *point = NULL;
@@ -362,6 +404,12 @@ int main(int argc, char **argv) {
         printTree(tree, 0);
 
         free(point);
+        if(!writePointsToFile(tree, pointDim)){
+            printf("Error: Cannot save points in CSV files.\n");
+            freeKDtree(tree);
+            freePointsArray(pointsCSV, countCSV);
+            return 1;
+        }
     }
     else if (strcmp(operation, "-kd_nearest") == 0) {
         double *point = NULL;
