@@ -1,0 +1,4 @@
+./build/robot_spatial test_clusters.csv -dbscan 0.6,5
+./build/robot_spatial test_clusters.csv -cmeans 3
+./build/robot_spatial test_clusters.csv -kd_nearest 5.1,5.1
+./build/robot_spatial test_clusters.csv -kd_insert 7.0,7.0
