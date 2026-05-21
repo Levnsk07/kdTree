@@ -101,12 +101,12 @@ bool parsePositiveInt(const char *text, int *value) {
     if (*endptr != '\0' || parsed <= 0)
         return false;
 
-    *value = (int) parsed;
+    *value = (int)parsed;
 
     return true;
 }
 
-///
+/// Parse dbscan parameters
 bool parseDbscanParams(const char *text, double *eps, int *minPts) {
     if (text == NULL || eps == NULL || minPts == NULL)
         return false;
@@ -257,17 +257,17 @@ bool writePointsToFile(Tree *tree, int dim) {
     char fileName[256];
     strftime(fileName, sizeof(fileName), "csv_files/points_%Y-%m-%d_%H-%M-%S.csv", local);
 
-    printf("Attempt to create file: %s\n", fileName); // Отладочное сообщение
+    fprintf(stderr, "Attempt to create file: %s\n", fileName); // Отладочное сообщение
     FILE *file = fopen(fileName, "w");
     if (!file) {
-        printf("Error: File %s was not created.\n", fileName);
+        fprintf(stderr, "Error: File %s was not created.\n", fileName);
         return false;
     }
 
     writePointsTreeToFile(file, tree, dim, 0, WRITE_POINTS);
 
     fclose(file);
-    printf("File %s was created successfully!\n", fileName); // Отладочное сообщение
+    fprintf(stderr, "File %s was created successfully!\n", fileName); // Отладочное сообщение
 
     return true;
 }
@@ -280,10 +280,10 @@ bool writeClustersToFiles(Tree *tree, int dim, int maxClusterIdx, const char *ba
     char fileName[256];
     for (int clusterIdx = 0; clusterIdx < maxClusterIdx; clusterIdx++) {
         snprintf(fileName, sizeof(fileName), "csv_files/%s_%d.csv", baseFileName, clusterIdx);
-        printf("Attempt to create file: %s\n", fileName); // Отладочное сообщение
+        fprintf(stderr, "Attempt to create file: %s\n", fileName); // Отладочное сообщение
         FILE *file = fopen(fileName, "w");
         if (!file) {
-            printf("Error: File %s was not created.\n", fileName);
+            fprintf(stderr, "Error: File %s was not created.\n", fileName);
             return false;
         }
 
@@ -291,20 +291,20 @@ bool writeClustersToFiles(Tree *tree, int dim, int maxClusterIdx, const char *ba
         writePointsTreeToFile(file, tree, dim, clusterIdx, WRITE_CLUSTERS);
 
         fclose(file);
-        printf("File %s was created successfully!\n", fileName); // Отладочное сообщение
+        fprintf(stderr, "File %s was created successfully!\n", fileName); // Отладочное сообщение
     }
 
     if (strcmp(baseFileName, "dbscan") == 0) {
         snprintf(fileName, sizeof(fileName), "csv_files/%s_noise.csv", baseFileName);
         FILE *file = fopen(fileName, "w");
         if (!file) {
-            printf("Error: File %s was not created.\n", fileName);
+            fprintf(stderr, "Error: File %s was not created.\n", fileName);
             return false;
         }
         writePointsTreeToFile(file, tree, dim, NOISE_CLUSTER, WRITE_CLUSTERS);
 
         fclose(file);
-        printf("File %s was created successfully!\n", fileName); // Отладочное сообщение
+        fprintf(stderr, "File %s was created successfully!\n", fileName); // Отладочное сообщение
     }
 
     return true;
@@ -324,7 +324,7 @@ int main(int argc, char **argv) {
     double **pointsCSV = NULL;
     int countCSV = 0, pointDimCSV = 0;
     if (!readPointsFromCSV(filePath, &pointsCSV, &countCSV, &pointDimCSV)) {
-        printf("Error: Cannot read points from CSV.\n");
+        fprintf(stderr, "Error: Cannot read points from CSV.\n");
         return 1;
     }
 
@@ -338,13 +338,13 @@ int main(int argc, char **argv) {
         int pointDim = 0;
 
         if (!parsePoint(params, &point, &pointDim)) {
-            printf("Error: Invalid point format.\n");
+            fprintf(stderr, "Error: Invalid point format.\n");
             free(point);
             freeKDtree(tree);
 
             return 1;
         } else if (pointDim != pointDimCSV) {
-            printf("Error: Point dimension does not match CSV dimension.");
+            fprintf(stderr, "Error: Point dimension does not match CSV dimension.\n");
             free(point);
             freeKDtree(tree);
 
@@ -353,7 +353,7 @@ int main(int argc, char **argv) {
 
         Tree *found = getPointInTree(tree, point, pointDim);
         if (found != NULL) {
-            printf("Error : Point was already exists in K-D tree.\n");
+            fprintf(stderr, "Error: Point was already exists in K-D tree.\n");
             free(point);
             freeKDtree(tree);
 
@@ -368,7 +368,7 @@ int main(int argc, char **argv) {
         printf("KD-tree:\n");
         printTree(tree, 0);
         if (!writePointsToFile(tree, pointDim)) {
-            printf("Error: Cannot save points in CSV files.\n");
+            fprintf(stderr, "Error: Cannot save points in CSV files.\n");
             freeKDtree(tree);
 
             return 1;
@@ -378,13 +378,13 @@ int main(int argc, char **argv) {
         int pointDim = 0;
 
         if (!parsePoint(params, &point, &pointDim)) {
-            printf("Error: Invalid point format.\n");
+            fprintf(stderr, "Error: Invalid point format.\n");
             free(point);
             freeKDtree(tree);
 
             return 1;
         } else if (pointDim != pointDimCSV) {
-            printf("Error: Point dimension does not match CSV dimension.");
+            fprintf(stderr, "Error: Point dimension does not match CSV dimension.\n");
             free(point);
             freeKDtree(tree);
             return 1;
@@ -392,7 +392,7 @@ int main(int argc, char **argv) {
 
         Tree *found = getPointInTree(tree, point, pointDim);
         if (found == NULL) {
-            printf("Error : Point was not found in K-D tree.\n");
+            fprintf(stderr, "Error: Point was not found in K-D tree.\n");
             free(point);
             freeKDtree(tree);
 
@@ -407,7 +407,7 @@ int main(int argc, char **argv) {
 
         free(point);
         if (!writePointsToFile(tree, pointDim)) {
-            printf("Error: Cannot save points in CSV files.\n");
+            fprintf(stderr, "Error: Cannot save points in CSV files.\n");
             freeKDtree(tree);
 
             return 1;
@@ -417,13 +417,13 @@ int main(int argc, char **argv) {
         int pointDim = 0;
 
         if (!parsePoint(params, &point, &pointDim)) {
-            printf("Error: Invalid point format.\n");
+            fprintf(stderr, "Error: Invalid point format.\n");
             free(point);
             freeKDtree(tree);
 
             return 1;
         } else if (pointDim != pointDimCSV) {
-            printf("Error: Point dimension does not match CSV dimension.");
+            fprintf(stderr, "Error: Point dimension does not match CSV dimension.\n");
             free(point);
             freeKDtree(tree);
 
@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
 
         Tree *nearest = findNearest(tree, point, pointDim);
         if (!nearest) {
-            printf("Error: Nearest point was not found.\n");
+            fprintf(stderr, "Error: Nearest point was not found.\n");
             free(point);
             freeKDtree(tree);
 
@@ -450,7 +450,7 @@ int main(int argc, char **argv) {
         int minPts = 0;
 
         if (!parseDbscanParams(params, &eps, &minPts)) {
-            printf("Error: Invalid DBSCAN format\n");
+            fprintf(stderr, "Error: Invalid DBSCAN format\n");
             freeKDtree(tree);
 
             return 1;
@@ -458,7 +458,7 @@ int main(int argc, char **argv) {
 
         int clustersCount = dbscanCluster(tree, eps, minPts, countCSV);
         if (clustersCount <= 0) {
-            printf("Error: DBSCAN found no clusters.\n");
+            fprintf(stderr, "Error: DBSCAN found no clusters.\n");
             freeKDtree(tree);
 
             return 1;
@@ -468,7 +468,7 @@ int main(int argc, char **argv) {
 
         // Сохранение результатов в файлы
         if (!writeClustersToFiles(tree, pointDimCSV, clustersCount, "dbscan")) {
-            printf("Error: Cannot save clusters in CSV files.\n");
+            fprintf(stderr, "Error: Cannot save clusters in CSV files.\n");
             freeKDtree(tree);
 
             return 1;
@@ -477,28 +477,28 @@ int main(int argc, char **argv) {
         int clustersCount = 0;
 
         if (!parsePositiveInt(params, &clustersCount)) {
-            printf("Error: Invalid Fuzzy C-Means format.\n");
+            fprintf(stderr, "Error: Invalid Fuzzy C-Means format.\n");
             freeKDtree(tree);
 
             return 1;
         }
-        printf("Cmeans operation\n");
         if (!fuzzyCMeans(tree, countCSV, pointDimCSV, clustersCount)) {
-            printf("Error: Fuzzy C-Means was failed.\n");
+            fprintf(stderr, "Error: Fuzzy C-Means was failed.\n");
             freeKDtree(tree);
 
             return 1;
         }
 
-        // Сделать вывод в файл
+        printf("Fuzzy C-Means clusters was counted successfully!\n");
+
         if (!writeClustersToFiles(tree, pointDimCSV, clustersCount, "cmeans")) {
-            printf("Error: Cannot save clusters in CSV files.\n");
+            fprintf(stderr, "Error: Cannot save clusters in CSV files.\n");
             freeKDtree(tree);
 
             return 1;
         }
     } else {
-        printf("Error: Unknown operation.\n");
+        fprintf(stderr, "Error: Unknown operation.\n");
         printAllFunc();
         freeKDtree(tree);
         return 1;
