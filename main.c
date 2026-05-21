@@ -387,7 +387,6 @@ int main(int argc, char **argv) {
             printf("Error: Point dimension does not match CSV dimension.");
             free(point);
             freeKDtree(tree);
-
             return 1;
         }
 
@@ -433,7 +432,6 @@ int main(int argc, char **argv) {
 
         Tree *nearest = findNearest(tree, point, pointDim);
         if (!nearest) {
-            // надо ли искать только в уже существующих? Да
             printf("Error: Nearest point was not found.\n");
             free(point);
             freeKDtree(tree);
@@ -446,8 +444,6 @@ int main(int argc, char **argv) {
             printf("%lf ", nearest->point[i]);
         }
         printf("\n");
-        printf("KD-tree:\n");
-        printTree(tree, 0);
         free(point);
     } else if (strcmp(operation, "-dbscan") == 0) {
         double eps = 0.0;
@@ -505,13 +501,11 @@ int main(int argc, char **argv) {
         printf("Error: Unknown operation.\n");
         printAllFunc();
         freeKDtree(tree);
-        // freePointsArray(pointsCSV, countCSV);
         return 1;
     }
 
 
     // ============ FREE==============
     freeKDtree(tree);
-    // freePointsArray(pointsCSV, countCSV);
     return 0;
 }
